@@ -64,14 +64,4 @@ jobs:
           name: orca-scan-results
           path: results/
 
-      # 5. Force a summary onto the GitHub Action UI page
-      - name: Write Summary to GitHub UI
-        if: always()
-        run: |
-          echo "### 🛡️ Orca Container Security Scan Completed" >> $GITHUB_STEP_SUMMARY
-          echo "The scan for **${{ env.IMAGE_NAME }}** has finished processing." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Where to find your results:**" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 **GitHub Security Tab:** Go to the 'Security' -> 'Code scanning alerts' tab on your repository." >> $GITHUB_STEP_SUMMARY
-          echo "- 📥 **Raw Files:** Scroll down to the **Artifacts** section on this exact page to download the JSON/SARIF reports." >> $GITHUB_STEP_SUMMARY
-          echo "- 🖥️ **Terminal Table:** Expand the *Run Orca Container Image Scan* step above to see the raw table output." >> $GITHUB_STEP_SUMMARY
+      
