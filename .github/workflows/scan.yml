@@ -24,11 +24,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. Build a small, fast image to test the scanner
+      # 1. Build a small image packed with outdated/vulnerable packages to test the scanner
       - name: Create Sample Dockerfile & Build Image
         run: |
           echo "FROM alpine:3.14" > Dockerfile
-          echo "RUN apk add --no-cache curl" >> Dockerfile
+          # INTENTIONAL VULNERABILITIES: Adding old versions of these packages guarantees CVE hits
+          echo "RUN apk add --no-cache curl openssl python3 nodejs bash tar" >> Dockerfile
           docker build -t ${{ env.IMAGE_NAME }} .
 
       # 2. Run the Orca Scanner on the image we just built
