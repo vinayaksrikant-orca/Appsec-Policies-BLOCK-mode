@@ -1,0 +1,70 @@
+name: Sample Orca Container Build & Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows you to trigger this manually from the Actions tab
+
+jobs:
+  orca-container_scan:
+    name: Orca Container Image Scan
+    runs-on: ubuntu-latest
+    
+    # REQUIRED PERMISSIONS: Prevents the "Resource not accessible" error
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    env:
+      PROJECT_KEY: testing-project-vinayak # <--- REPLACE WITH YOUR ACTUAL PROJECT KEY
+      IMAGE_NAME: my-alpine-test:latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 1. Build a small, fast image to test the scanner
+      - name: Create Sample Dockerfile & Build Image
+        run: |
+          echo "FROM alpine:3.14" > Dockerfile
+          echo "RUN apk add --no-cache curl" >> Dockerfile
+          docker build -t ${{ env.IMAGE_NAME }} .
+
+      # 2. Run the Orca Scanner on the image we just built
+      - name: Run Orca Container Image Scan
+        uses: orcasecurity/shiftleft-container-image-action@v1
+        with:
+          api_token: ${{ secrets.ORCA_SECURITY_API_TOKEN }}
+          project_key: ${{ env.PROJECT_KEY }}
+          image: ${{ env.IMAGE_NAME }}
+          format: "sarif,json,table"
+          output: "results/"
+          display_name: "Orca Container Scan"
+
+      # 3. Upload the SARIF report to GitHub's Security Tab
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() # Ensures it uploads even if the scan finds vulnerabilities and "fails"
+        with:
+          sarif_file: results/
+
+      # 4. Save the JSON and SARIF files as a downloadable zip file
+      - name: Upload Scan Results as Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orca-scan-results
+          path: results/
+
+      # 5. THE FIX: Force a summary onto the GitHub Action UI page
+      - name: Write Summary to GitHub UI
+        if: always()
+        run: |
+          echo "### 🛡️ Orca Container Security Scan Completed" >> $GITHUB_STEP_SUMMARY
+          echo "The scan for **${{ env.IMAGE_NAME }}** has finished processing." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Where to find your results:**" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 **GitHub Security Tab:** Go to the 'Security' -> 'Code scanning alerts' tab on your repository." >> $GITHUB_STEP_SUMMARY
+          echo "- 📥 **Raw Files:** Scroll down to the **Artifacts** section on this exact page to download the JSON/SARIF reports." >> $GITHUB_STEP_SUMMARY
+          echo "- 🖥️ **Terminal Table:** Expand the *Run Orca Container Image Scan* step above to see the raw table output." >> $GITHUB_STEP_SUMMARY
