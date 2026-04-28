@@ -12,7 +12,7 @@ jobs:
     
     # REQUIRED PERMISSIONS: Prevents the "Resource not accessible" error
     permissions:
-      contents: read
+      contents: read 
       security-events: write
       actions: read
 
